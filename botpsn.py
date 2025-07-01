@@ -28,24 +28,16 @@ def update_cambios():
 
 def inicializa_basedatos():
     global con
-    con = sqlite3.connect("busquedas.db")
+    con = sqlite3.connect("botpsn.db")
     con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS busquedas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chatid TEXT,
-            sku TEXT,
-            preciomin REAL
-        )
-    """)
-    con.commit()
 
 asyncio.run(bot.set_my_commands([
     BotCommand('start', text('es','start')),
+    BotCommand('mitienda', text('es','mystore')),
 ],language_code='es'))
 asyncio.run(bot.set_my_commands([
     BotCommand('start', text('en','start')),
+    BotCommand('mystore', text('en','mystore')),
 ]))
 
 async def main():
@@ -69,6 +61,19 @@ async def send_welcome(message):
     await bot.reply_to(message, text(message.from_user.language_code,'start'))
 
 ###########################################################
+# Comando mystore
+###########################################################
+@bot.message_handler(commands=['mystore','mitienda'])
+async def send_welcome(message):
+    keyboard = types.InlineKeyboardMarkup()
+    for store,data in stores.items():
+        texto= f"{data['name']} {data['flag']}"
+        callback_data = f"/selectstore {store}"
+        keyboard.add(types.InlineKeyboardButton(text=texto, callback_data=callback_data))
+    await bot.send_message(message.chat.id, text=text(message.from_user.language_code,'mystore'), reply_markup=keyboard)
+
+
+###########################################################
 # Funcion que devuelve el info de un sku
 ###########################################################
 async def retorna_info(message,sku):
@@ -82,7 +87,7 @@ async def retorna_info(message,sku):
         mensaje= f"<b>{titulo}</b>\n"
         for precio, store in precios:
             if tienda==store:
-                mensaje+=f"<b>Precio más barato en {stores[store]['name']} {stores[store]['flag']}</b>: {precio:.2f} € <a href='{url_product(sku,store)}'>🏪🏪🏪</a>\n"
+                mensaje+=f"<b>Precio más barato en {stores[store]['name']} {stores[store]['flag']}</b>: {precio:.2f} € <a href='{url_product(sku,store)}'>🏪🏪🏪\n"
             else:
                 mensaje+=f"Precio en {stores[store]['name']} {stores[store]['flag']} : {precio:.2f} €\n"
         # print(mensaje)
@@ -112,9 +117,15 @@ async def echo_message(message):
         keyboard.add(types.InlineKeyboardButton(text=texto, callback_data=callback_data))
     await bot.send_message(message.chat.id, text="Resultados encontrados:", reply_markup=keyboard)
 
+###########################################################
+# Callbacks para los botones de resultados
+# Se ejecuta cuando el usuario pulsa un botón de resultado
+###########################################################
 @bot.callback_query_handler(func=lambda message: True)
 async def callbacks(call):
     if call.data.startswith('/sku '):
+        # Callback para buscar un SKU
+        # El formato del callback_data es: /sku SKU TIENDA
         parts = call.data.split()
         if len(parts) == 3:
             sku = parts[1]
@@ -122,6 +133,23 @@ async def callbacks(call):
             # print(f"SKU: {sku}, Tienda: {tienda}")
             await retorna_info(call.message, sku)
             return
+        else:
+            await bot.answer_callback_query(call.id, "Formato de comando incorrecto.")
+    elif call.data.startswith('/selectstore '):
+        # Callback para seleccionar una tienda
+        # El formato del callback_data es: /selectstore TIENDA
+        parts = call.data.split()
+        if len(parts) == 2:
+            store = parts[1]
+            if store in stores:
+                global con
+                cursor = con.cursor()
+                # print(f"Seleccionando tienda: {store} para el usuario {call.from_user.id}")
+                cursor.execute("INSERT INTO usuarios(chatid,storedefault) VALUES ('{chatid}','{store}') ON CONFLICT (chatid) DO UPDATE SET storedefault='{store}' WHERE chatid='{chatid}';".format(chatid=call.from_user.id,store=store))
+                con.commit()
+                await bot.send_message(call.message.chat.id, text(call.from_user.language_code,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
+            else:
+                await bot.answer_callback_query(call.id, "Tienda no válida.")
         else:
             await bot.answer_callback_query(call.id, "Formato de comando incorrecto.")
 
