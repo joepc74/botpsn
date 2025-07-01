@@ -87,7 +87,7 @@ async def retorna_info(message,sku):
         mensaje= f"<b>{titulo}</b>\n"
         for precio, store in precios:
             if tienda==store:
-                mensaje+=f"<b>Precio más barato en {stores[store]['name']} {stores[store]['flag']}</b>: {precio:.2f} € <a href='{url_product(sku,store)}'>🏪🏪🏪\n"
+                mensaje+=f"<b>Precio más barato en {stores[store]['name']} {stores[store]['flag']}</b>: {precio:.2f} € <a href='{url_product(sku,store)}'>🏪🏪🏪</a>\n"
             else:
                 mensaje+=f"Precio en {stores[store]['name']} {stores[store]['flag']} : {precio:.2f} €\n"
         # print(mensaje)
@@ -105,7 +105,11 @@ async def echo_message(message):
     # print(message.text)
     await bot.send_chat_action(message.chat.id, 'typing')
     cadbusqueda=message.text.lower().split()
-    skus=buscar_sku(cadbusqueda)
+    global con
+    cursor = con.cursor()
+    cursor.execute("SELECT storedefault FROM usuarios WHERE chatid=?;", (message.from_user.id,))
+    row = cursor.fetchone()
+    skus=buscar_sku(cadbusqueda, 'ESP' if row is None else row[0])
     if skus is None:
         await bot.reply_to(message, text(message.from_user.language_code,'no_results'))
         return
@@ -134,7 +138,7 @@ async def callbacks(call):
             await retorna_info(call.message, sku)
             return
         else:
-            await bot.answer_callback_query(call.id, "Formato de comando incorrecto.")
+            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
     elif call.data.startswith('/selectstore '):
         # Callback para seleccionar una tienda
         # El formato del callback_data es: /selectstore TIENDA
@@ -149,9 +153,9 @@ async def callbacks(call):
                 con.commit()
                 await bot.send_message(call.message.chat.id, text(call.from_user.language_code,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
             else:
-                await bot.answer_callback_query(call.id, "Tienda no válida.")
+                await bot.answer_callback_query(call.id, text(call.from_user.language_code,'invalidstore'))
         else:
-            await bot.answer_callback_query(call.id, "Formato de comando incorrecto.")
+            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
 
 if __name__ == "__main__":
     update_cambios()
