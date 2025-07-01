@@ -119,7 +119,7 @@ async def echo_message(message):
         texto= f"{result[0]} - {result[1]} {stores[result[2]]['flag']}"
         callback_data = f"/sku {sku} {result[2]}"
         keyboard.add(types.InlineKeyboardButton(text=texto, callback_data=callback_data))
-    await bot.send_message(message.chat.id, text="Resultados encontrados:", reply_markup=keyboard)
+    await bot.send_message(message.chat.id, text=text(message.from_user.language_code,'resultsfound'), reply_markup=keyboard)
 
 ###########################################################
 # Callbacks para los botones de resultados

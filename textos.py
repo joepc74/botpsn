@@ -8,6 +8,7 @@ textos={
         'selectedstore':"Has seleccionado la tienda: ",
         'commandincorrect':"Formato de comando incorrecto.",
         'invalidstore':"Tienda no válida. Por favor, selecciona una tienda válida.",
+        'resultsfound':"Resultados encontrados:",
     },
     'en':{
         'start':"Hello.\nWelcome to the biggest search bot for the best prices on PSN.",
@@ -16,6 +17,7 @@ textos={
         'selectedstore':"You have selected the store: ",
         'commandincorrect':"Incorrect command format.",
         'invalidstore':"Invalid store. Please select a valid store.",
+        'resultsfound':"Results found:",
     },
 }
 
