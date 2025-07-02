@@ -129,6 +129,17 @@ async def get_game_info(sku,cambios,con):
     #     print(f'Cheapest price of {titulo}: {preciomasbarato:.2f} in {tiendamasbarata}')
     return [titulo, resultados, tiendamasbarata]
 
+def get_game_title(sku,con, store='ESP'):
+    cursor = con.cursor()
+    cursor.execute("SELECT titulo FROM busquedas WHERE sku=? AND store=?;", (sku,store))
+    row = cursor.fetchone()
+    if row is not None:
+        return row[0]
+    cursor.execute("SELECT titulo FROM busquedas WHERE sku=?;", (sku))
+    row = cursor.fetchone()
+    if row is not None:
+        return row[0]
+    return 'Unknown'
 
 if __name__ == "__main__":
     # buscar_sku('cyberpunk 2077')
