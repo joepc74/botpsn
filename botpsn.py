@@ -84,14 +84,14 @@ async def retorna_info(message,sku):
         await bot.reply_to(message, "No se encontró información para este SKU.")
     else:
         titulo, precios, tienda = info
-        mensaje= f"<b>{titulo}</b>\n"
+        mensaje=f"<b>{titulo}</b>\n"
         for precio, store in precios:
             if tienda==store:
                 mensaje+=f"<b>Precio más barato en {stores[store]['name']} {stores[store]['flag']}</b>: {precio:.2f} € <a href='{url_product(sku,store)}'>🏪🏪🏪</a>\n"
             else:
                 mensaje+=f"Precio en {stores[store]['name']} {stores[store]['flag']} : {precio:.2f} €\n"
         # print(mensaje)
-        await bot.send_message(message.chat.id, mensaje, parse_mode='HTML')
+        await bot.send_message(message.chat.id, mensaje, parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
 
 ###########################################################
 # Resto comandos
@@ -154,6 +154,19 @@ async def callbacks(call):
                 await bot.send_message(call.message.chat.id, text(call.from_user.language_code,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
             else:
                 await bot.answer_callback_query(call.id, text(call.from_user.language_code,'invalidstore'))
+        else:
+            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
+    elif call.data.startswith('/track '):
+        # Callback para trackear un SKU
+        # El formato del callback_data es: /track SKU
+        parts = call.data.split()
+        if len(parts) == 3:
+            sku = parts[1]
+            precio=parts[2]
+            cursor = con.cursor()
+            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin) SELECT '{chatid}','{sku}','{precio}' WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=call.from_user.id, sku=sku,precio=precio))
+            con.commit()
+            await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
         else:
             await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
 

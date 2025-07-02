@@ -59,7 +59,7 @@ async def get_game_info(sku,cambios,con):
         await sem.acquire()
         try:
             cursor = con.cursor()
-            cursor.execute("SELECT precio FROM busquedas WHERE sku=? AND store=? AND actualizado>?;", (sku,store,int(time.time())-3*60*60))
+            cursor.execute("SELECT * FROM busquedas WHERE sku=? AND store=? AND actualizado>?;", (sku,store,int(time.time())-3*60*60))
             rows = cursor.fetchall()
             if rows==[]:
                 # print(f'Fetching {sku} for {store}...')
@@ -108,18 +108,20 @@ async def get_game_info(sku,cambios,con):
                         preciomasbarato = precio
                         tiendamasbarata = store
                     # print(f'Price of {titulo}: {texto} ({store}) -> {precio:.2f} €')
-                    cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, precio))
+                    cursor.execute("INSERT INTO busquedas (sku, store, titulo, precio) VALUES (?, ?, ?, ?);", (sku, store, titulo, precio))
                     con.commit()
                     resultados.append([precio, store])
             else:
                 for row in rows:
                     precio = row['precio']
-                    print(f'Using cached price for {sku} in {store}: {precio}')
+                    # print(f'Using cached price for {sku} in {store}: {precio}')
                     if precio==None or precio=='null':
                         continue
                     if(precio < preciomasbarato):
                         preciomasbarato = precio
                         tiendamasbarata = store
+                    if titulo is None:
+                        titulo=row['titulo']
                     resultados.append([precio, store])
         finally:
             sem.release()
@@ -130,6 +132,7 @@ async def get_game_info(sku,cambios,con):
 
 if __name__ == "__main__":
     # buscar_sku('cyberpunk 2077')
-    cambios=requests.get('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json').json()['eur']
+    # cambios=requests.get('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json').json()['eur']
     # get_game_info('EP4497-PPSA04029_00-EXPANSION1B00000',cambios)
-    print(get_game_info('EP4497-PPSA04027_00-EXPANSION1B00000',cambios))
+    # print(get_game_info('EP4497-PPSA04027_00-EXPANSION1B00000',cambios))
+    pass
