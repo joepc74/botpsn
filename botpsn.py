@@ -78,7 +78,7 @@ async def send_welcome(message):
 ###########################################################
 async def retorna_info(message,sku):
     await bot.send_chat_action(message.chat.id, 'typing')
-    info = get_game_info(sku, cambios)
+    info = await get_game_info(sku, cambios,con)
     # print(info)
     if info is None:
         await bot.reply_to(message, "No se encontró información para este SKU.")
