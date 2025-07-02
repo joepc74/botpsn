@@ -67,12 +67,17 @@ async def get_game_info(sku,cambios,con):
 
                 response = requests.get(url, headers=headers)
                 if response.status_code != 200:
+                    cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
+                    con.commit()
+
                     continue
                 soup = BeautifulSoup(response.content, 'html.parser')
 
                 ficha = soup.find('div', class_='psw-pdp-card-anchor')
                 if ficha is None:
                     # print(f'No product found for {sku} in {store[0]} -> {url}')
+                    cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
+                    con.commit()
                     continue
 
                 if titulo==None:
@@ -82,6 +87,8 @@ async def get_game_info(sku,cambios,con):
                 # print(title_elements)
                 for title_element in title_elements:
                     if title_element.find('span', class_='psw-icon') is not None:
+                        cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
+                        con.commit()
                         continue
                     texto=title_element.find('span',class_='psw-t-title-m').text.strip()
                     if texto in ['Game Trial','Prueba de juego']:
@@ -89,6 +96,8 @@ async def get_game_info(sku,cambios,con):
                     # print(f'Title: {titulo} Store: {data['name']} -> {texto}')
                     preciore=re.search(data['regex'], texto)
                     if preciore is None:
+                        cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
+                        con.commit()
                         continue
                     locale.setlocale(locale.LC_ALL, data['coinlocale'])
                     preciol=locale.atof(preciore.group(1))
@@ -105,7 +114,9 @@ async def get_game_info(sku,cambios,con):
             else:
                 for row in rows:
                     precio = row['precio']
-                    # print(f'Using cached price for {sku} in {store}: {precio}')
+                    print(f'Using cached price for {sku} in {store}: {precio}')
+                    if precio==None or precio=='null':
+                        continue
                     if(precio < preciomasbarato):
                         preciomasbarato = precio
                         tiendamasbarata = store
