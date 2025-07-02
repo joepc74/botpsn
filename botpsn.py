@@ -34,10 +34,14 @@ def inicializa_basedatos():
 asyncio.run(bot.set_my_commands([
     BotCommand('start', text('es','start')),
     BotCommand('mitienda', text('es','mystore')),
+    BotCommand('misseguimientos', text('es','mytrackings')),
+    BotCommand('mistiendastracking', text('es','mytrackingstores')),
 ],language_code='es'))
 asyncio.run(bot.set_my_commands([
     BotCommand('start', text('en','start')),
     BotCommand('mystore', text('en','mystore')),
+    BotCommand('mytrackings', text('en','mytrackings')),
+    BotCommand('mytrackingstores', text('es','mytrackingstores')),
 ]))
 
 async def main():
@@ -72,6 +76,53 @@ async def send_welcome(message):
         keyboard.add(types.InlineKeyboardButton(text=texto, callback_data=callback_data))
     await bot.send_message(message.chat.id, text=text(message.from_user.language_code,'mystore'), reply_markup=keyboard)
 
+###########################################################
+# Comando mytrackingstores
+###########################################################
+def botonera_select_stores(chatid,stores_selected=None):
+    CHECK_CHAR = '✅'
+    UNCHECK_CHAR = '⬜'
+    if stores_selected is None:
+        global con
+        cursor = con.cursor()
+        stores_selected=cursor.execute("SELECT searchstores FROM usuarios WHERE chatid=?;", (chatid,)).fetchone()
+        if stores_selected is None or stores_selected['searchstores'] is None:
+            stores_selected=set()
+        else:
+            stores_selected=set(stores_selected['searchstores'].split('#'))
+    # print(f"---Selected stores for user {chatid}: {stores_selected}")
+    keyboard=[]
+    for store,data in stores.items():
+        # print(f"---Adding store {store} to keyboard")
+        # print(f"---Store selected: {store in stores_selected}")
+        keyboard.append([InlineKeyboardButton(
+            f"{CHECK_CHAR if store in stores_selected else UNCHECK_CHAR} {data['name']} {data['flag']}",
+            callback_data=f"/togglets__{store}"
+        )])
+
+    return InlineKeyboardMarkup(keyboard)
+
+@bot.message_handler(commands=['mytrackingstores','mistiendastracking'])
+async def select_tracking_stores(message):
+    await bot.send_message(message.from_user.id,text(message.from_user.language_code,'mytrackingstores'), reply_markup=botonera_select_stores(message.from_user.id))
+    return
+
+###########################################################
+# Comando mytrackings
+###########################################################
+@bot.message_handler(commands=['mytrackings','misseguimientos'])
+async def send_mytrackings(message):
+    global con
+    cursor = con.cursor()
+    cursor.execute("SELECT sku,preciomin FROM trackings WHERE chatid=?;", (message.from_user.id,))
+    seguimientos = cursor.fetchall()
+    if not seguimientos:
+        await bot.reply_to(message, text(message.from_user.language_code,'no_trackings'))
+        return
+    respuesta=""
+    for sku, precio in seguimientos:
+        respuesta += "SKU: {sku} - Titulo: {titulo} - Precio mínimo: {precio:.2f} €\n".format(sku=sku, titulo=get_game_title(sku,con), precio=precio)
+    await bot.reply_to(message, respuesta)
 
 ###########################################################
 # Funcion que devuelve el info de un sku
@@ -167,6 +218,31 @@ async def callbacks(call):
             cursor.execute("INSERT INTO trackings(chatid,sku,preciomin) SELECT '{chatid}','{sku}','{precio}' WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=call.from_user.id, sku=sku,precio=precio))
             con.commit()
             await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
+        else:
+            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
+    elif call.data.startswith('/togglets__'):
+        # Callback para alternar la selección de una tienda en la lista de seguimiento
+        # El formato del callback_data es: /togglets__TIENDA
+        parts = call.data.split('__')
+        if len(parts) == 2:
+            store = parts[1]
+            cursor = con.cursor()
+            cursor.execute("SELECT searchstores FROM usuarios WHERE chatid=?;", (call.from_user.id,))
+            row = cursor.fetchone()
+            if row is None or row[0] is None:
+                stores_selected = set()
+            else:
+                stores_selected = set(row[0].split('#'))
+            # print(f"Toggling store: {store} for user {call.from_user.id}")
+            # print(f"Current selected stores: {stores_selected}")
+            if store in stores_selected:
+                stores_selected.remove(store)
+            else:
+                stores_selected.add(store)
+            cursor.execute("INSERT INTO usuarios(chatid,searchstores) VALUES ('{chatid}','{stores}') ON CONFLICT (chatid) DO UPDATE SET searchstores='{stores}' WHERE chatid='{chatid}';".format(chatid=call.from_user.id,stores='#'.join(stores_selected)))
+            con.commit()
+            # print(call.message)
+            await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=botonera_select_stores(call.from_user.id,stores_selected))
         else:
             await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
 
