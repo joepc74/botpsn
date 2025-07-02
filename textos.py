@@ -9,6 +9,8 @@ textos={
         'commandincorrect':"Formato de comando incorrecto.",
         'invalidstore':"Tienda no válida. Por favor, selecciona una tienda válida.",
         'resultsfound':"Resultados encontrados:",
+        'prizecheap':"<b>Precio más barato en {store} {flag}</b>: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>\n",
+        'prizenocheap':"Precio en {store} {flag} : {precio:.2f} €\n"
     },
     'en':{
         'start':"Hello.\nWelcome to the biggest search bot for the best prices on PSN.",
@@ -18,6 +20,8 @@ textos={
         'commandincorrect':"Incorrect command format.",
         'invalidstore':"Invalid store. Please select a valid store.",
         'resultsfound':"Results found:",
+        'prizecheap':"<b>Cheapest price in {store} {flag}</b>: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>\n",
+        'prizenocheap':"Price in {store} {flag} : {precio:.2f} €\n"
     },
 }
 

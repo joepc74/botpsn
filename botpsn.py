@@ -76,7 +76,7 @@ async def send_welcome(message):
 ###########################################################
 # Funcion que devuelve el info de un sku
 ###########################################################
-async def retorna_info(message,sku):
+async def retorna_info(message,sku, lang='es'):
     await bot.send_chat_action(message.chat.id, 'typing')
     info = await get_game_info(sku, cambios,con)
     # print(info)
@@ -87,9 +87,9 @@ async def retorna_info(message,sku):
         mensaje=f"<b>{titulo}</b>\n"
         for precio, store in precios:
             if tienda==store:
-                mensaje+=f"<b>Precio más barato en {stores[store]['name']} {stores[store]['flag']}</b>: {precio:.2f} € <a href='{url_product(sku,store)}'>🏪🏪🏪</a>\n"
+                mensaje+=text(lang,'prizecheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store))
             else:
-                mensaje+=f"Precio en {stores[store]['name']} {stores[store]['flag']} : {precio:.2f} €\n"
+                mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio)
         # print(mensaje)
         await bot.send_message(message.chat.id, mensaje, parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
 
@@ -99,7 +99,7 @@ async def retorna_info(message,sku):
 @bot.message_handler(func=lambda message: True)
 async def echo_message(message):
     if re.match(r'.*-.*-.*',message.text)!=None:
-        await retorna_info(message,message.text)
+        await retorna_info(message,message.text, message.from_user.language_code)
         return
     # print(message.chat.id)
     # print(message.text)
@@ -135,7 +135,7 @@ async def callbacks(call):
             sku = parts[1]
             # tienda = parts[2]
             # print(f"SKU: {sku}, Tienda: {tienda}")
-            await retorna_info(call.message, sku)
+            await retorna_info(call.message, sku, call.from_user.language_code)
             return
         else:
             await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
