@@ -218,6 +218,7 @@ async def callbacks(call):
             cursor.execute("INSERT INTO trackings(chatid,sku,preciomin) SELECT '{chatid}','{sku}','{precio}' WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=call.from_user.id, sku=sku,precio=precio))
             con.commit()
             await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
+            await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=None)
         else:
             await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
     elif call.data.startswith('/togglets__'):
