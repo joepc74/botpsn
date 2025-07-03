@@ -25,7 +25,6 @@ def update_cambios():
         print(f'Error updating currency changes: {e}')
 
 
-
 def inicializa_basedatos():
     global con
     con = sqlite3.connect("botpsn.db")
@@ -44,13 +43,42 @@ asyncio.run(bot.set_my_commands([
     BotCommand('mytrackingstores', text('es','mytrackingstores')),
 ]))
 
+###########################################################
+# Tarea de actualizacion de trackings
+###########################################################
+async def actualiza_trackings():
+    global con
+    cursor= con.cursor()
+    while True:
+        print("Checking for price updates...")
+        seguimentos= cursor.execute("SELECT chatid,sku,preciomin FROM trackings;").fetchall()
+        if seguimentos:
+            for seguimiento in seguimentos:
+                chatid, sku, preciomin = seguimiento
+                # obtiene las tiendas seleccionadas por el usuario
+                info = await get_game_info(sku, cambios, con)
+                if info is None:
+                    continue
+                titulo, precios, tienda, precio_actual = info
+                # si el precio actual es menor que el precio mínimo registrado, envía un mensaje al usuario
+                if precio_actual < preciomin:
+                    mensaje = f"<b>{titulo}</b>\n"
+                    mensaje += "Nuevo precio más barato en {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>".format(store=stores[tienda]['name'], flag=stores[tienda]['flag'], precio=precio_actual, url=url_product(sku, tienda))
+                    try:
+                        # se envía el mensaje al usuario
+                        await bot.send_message(chatid, mensaje, parse_mode='HTML')
+                        # se actualiza el precio mínimo en la base de datos
+                        cursor.execute("UPDATE trackings SET preciomin=? WHERE chatid=? AND sku=?;", (precio_actual, chatid, sku))
+                        con.commit()
+                    except Exception as e:
+                        print(f"Error sending message to {chatid}: {e}")
+        await asyncio.sleep(6*60*60) # se ejecuta cada 6 horas
+
 async def main():
     try:
         bot.add_custom_filter(asyncio_filters.StateFilter(bot))
         L = await asyncio.gather(
-            # tareas_diarias(),
-            # tareas_horarias(),
-            # borrado_regalos(),
+            actualiza_trackings(),
             bot.polling(non_stop=True)
             )
     finally:

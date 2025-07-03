@@ -127,7 +127,7 @@ async def get_game_info(sku,cambios,con):
             sem.release()
     # if titulo!= None:
     #     print(f'Cheapest price of {titulo}: {preciomasbarato:.2f} in {tiendamasbarata}')
-    return [titulo, resultados, tiendamasbarata]
+    return [titulo, resultados, tiendamasbarata,preciomasbarato]
 
 def get_game_title(sku,con, store='ESP'):
     cursor = con.cursor()
