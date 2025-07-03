@@ -131,11 +131,11 @@ async def get_game_info(sku,cambios,con):
 
 def get_game_title(sku,con, store='ESP'):
     cursor = con.cursor()
-    cursor.execute("SELECT titulo FROM busquedas WHERE sku=? AND store=?;", (sku,store))
+    cursor.execute("SELECT titulo FROM busquedas WHERE sku=? AND store=? AND NOT titulo='Unknown';", (sku,store))
     row = cursor.fetchone()
     if row is not None:
         return row[0]
-    cursor.execute("SELECT titulo FROM busquedas WHERE sku=?;", (sku))
+    cursor.execute("SELECT titulo FROM busquedas WHERE sku=? AND NOT titulo='Unknown';", (sku))
     row = cursor.fetchone()
     if row is not None:
         return row[0]

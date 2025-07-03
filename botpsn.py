@@ -72,6 +72,7 @@ async def actualiza_trackings():
                         con.commit()
                     except Exception as e:
                         print(f"Error sending message to {chatid}: {e}")
+        print("Price updates checked.")
         await asyncio.sleep(6*60*60) # se ejecuta cada 6 horas
 
 async def main():
@@ -158,11 +159,10 @@ async def send_mytrackings(message):
 async def retorna_info(message,sku, lang='es'):
     await bot.send_chat_action(message.chat.id, 'typing')
     info = await get_game_info(sku, cambios,con)
-    # print(info)
     if info is None:
         await bot.reply_to(message, "No se encontró información para este SKU.")
     else:
-        titulo, precios, tienda = info
+        titulo, precios, tienda, preciomasbarato = info
         mensaje=f"<b>{titulo}</b>\n"
         for precio, store in precios:
             if tienda==store:
