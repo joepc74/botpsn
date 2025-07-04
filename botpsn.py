@@ -146,13 +146,16 @@ async def send_mytrackings(message):
     cursor = con.cursor()
     cursor.execute("SELECT sku,preciomin FROM trackings WHERE chatid=?;", (message.from_user.id,))
     seguimientos = cursor.fetchall()
+    lang=message.from_user.language_code
     if not seguimientos:
-        await bot.reply_to(message, text(message.from_user.language_code,'no_trackings'))
+        await bot.reply_to(message, text(lang,'no_trackings'))
         return
     respuesta=""
     for sku, precio in seguimientos:
-        respuesta += "SKU: {sku} - Titulo: {titulo} - Precio mínimo: {precio:.2f} €\n".format(sku=sku, titulo=get_game_title(sku,con), precio=precio)
-    await bot.reply_to(message, respuesta)
+        # respuesta += "SKU: {sku} - Titulo: {titulo} - Precio mínimo: {precio:.2f} €\n".format(sku=sku, titulo=get_game_title(sku,con), precio=precio)
+        respuesta += text(lang,'mytracksline').format(sku=sku, titulo=get_game_title(sku,con), precio=precio)
+    await bot.reply_to(message, respuesta, parse_mode='HTML')
+    # await bot.delete_message(message.chat.id, message.id)  # Elimina el mensaje original para evitar spam
 
 ###########################################################
 # Funcion que devuelve el info de un sku
@@ -238,6 +241,7 @@ async def callbacks(call):
                 cursor.execute("INSERT INTO usuarios(chatid,storedefault) VALUES ('{chatid}','{store}') ON CONFLICT (chatid) DO UPDATE SET storedefault='{store}' WHERE chatid='{chatid}';".format(chatid=userid,store=store))
                 con.commit()
                 await bot.send_message(call.message.chat.id, text(lang,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
+                await bot.delete_message(call.message.chat.id, call.message.id)  # Elimina el mensaje original para evitar spam
             else:
                 await bot.answer_callback_query(call.id, text(lang,'invalidstore'))
         else:
@@ -250,7 +254,7 @@ async def callbacks(call):
             sku = parts[1]
             precio=parts[2]
             cursor = con.cursor()
-            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin,lang) SELECT '{chatid}','{sku}','{precio}',{lang} WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=userid, sku=sku,precio=precio,lang=lang))
+            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin,lang) SELECT '{chatid}','{sku}','{precio}','{lang}' WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=userid, sku=sku,precio=precio,lang=lang))
             con.commit()
             await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
             await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=None)
