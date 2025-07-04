@@ -14,17 +14,6 @@ from config import TELEGRAM_TOKEN
 bot = AsyncTeleBot(TELEGRAM_TOKEN)
 cambios=None
 
-def update_cambios():
-    global cambios
-    # Actualiza el diccionario de cambios de divisas
-    # Si falla, deja el valor anterior
-    try:
-        cambios=requests.get('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json').json()['eur']
-        print(f'Currency changes updated.')
-    except Exception as e:
-        print(f'Error updating currency changes: {e}')
-
-
 def inicializa_basedatos():
     global con
     con = sqlite3.connect("botpsn.db")
@@ -42,6 +31,29 @@ asyncio.run(bot.set_my_commands([
     BotCommand('mytrackings', text('en','mytrackings')),
     BotCommand('mytrackingstores', text('es','mytrackingstores')),
 ]))
+
+async def main():
+    try:
+        bot.add_custom_filter(asyncio_filters.StateFilter(bot))
+        L = await asyncio.gather(
+            update_cambios(),
+            actualiza_trackings(),
+            bot.polling(non_stop=True)
+            )
+    finally:
+        bot.close()
+
+async def update_cambios():
+    global cambios
+    while True:
+        # Actualiza el diccionario de cambios de divisas
+        # Si falla, deja el valor anterior
+        try:
+            cambios=requests.get('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json').json()['eur']
+            print(f'Currency changes updated.')
+        except Exception as e:
+            print(f'Error updating currency changes: {e}')
+        await asyncio.sleep(12*60*60) # se ejecuta cada 12 horas
 
 ###########################################################
 # Tarea de actualizacion de trackings
@@ -74,17 +86,6 @@ async def actualiza_trackings():
                         print(f"Error sending message to {chatid}: {e}")
         print("Price updates checked.")
         await asyncio.sleep(6*60*60) # se ejecuta cada 6 horas
-
-async def main():
-    try:
-        bot.add_custom_filter(asyncio_filters.StateFilter(bot))
-        L = await asyncio.gather(
-            actualiza_trackings(),
-            bot.polling(non_stop=True)
-            )
-    finally:
-        bot.close()
-
 
 ###########################################################
 # Comando start
@@ -206,6 +207,8 @@ async def echo_message(message):
 ###########################################################
 @bot.callback_query_handler(func=lambda message: True)
 async def callbacks(call):
+    lang=call.from_user.language_code
+    userid=call.from_user.id
     if call.data.startswith('/sku '):
         # Callback para buscar un SKU
         # El formato del callback_data es: /sku SKU TIENDA
@@ -214,10 +217,10 @@ async def callbacks(call):
             sku = parts[1]
             # tienda = parts[2]
             # print(f"SKU: {sku}, Tienda: {tienda}")
-            await retorna_info(call.message, sku, call.from_user.language_code)
+            await retorna_info(call.message, sku, lang)
             return
         else:
-            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
+            await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
     elif call.data.startswith('/selectstore '):
         # Callback para seleccionar una tienda
         # El formato del callback_data es: /selectstore TIENDA
@@ -227,14 +230,14 @@ async def callbacks(call):
             if store in stores:
                 global con
                 cursor = con.cursor()
-                # print(f"Seleccionando tienda: {store} para el usuario {call.from_user.id}")
-                cursor.execute("INSERT INTO usuarios(chatid,storedefault) VALUES ('{chatid}','{store}') ON CONFLICT (chatid) DO UPDATE SET storedefault='{store}' WHERE chatid='{chatid}';".format(chatid=call.from_user.id,store=store))
+                # print(f"Seleccionando tienda: {store} para el usuario {userid}")
+                cursor.execute("INSERT INTO usuarios(chatid,storedefault) VALUES ('{chatid}','{store}') ON CONFLICT (chatid) DO UPDATE SET storedefault='{store}' WHERE chatid='{chatid}';".format(chatid=userid,store=store))
                 con.commit()
-                await bot.send_message(call.message.chat.id, text(call.from_user.language_code,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
+                await bot.send_message(call.message.chat.id, text(lang,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
             else:
-                await bot.answer_callback_query(call.id, text(call.from_user.language_code,'invalidstore'))
+                await bot.answer_callback_query(call.id, text(lang,'invalidstore'))
         else:
-            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
+            await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
     elif call.data.startswith('/track '):
         # Callback para trackear un SKU
         # El formato del callback_data es: /track SKU
@@ -243,12 +246,12 @@ async def callbacks(call):
             sku = parts[1]
             precio=parts[2]
             cursor = con.cursor()
-            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin,lang) SELECT '{chatid}','{sku}','{precio}',{lang} WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=call.from_user.id, sku=sku,precio=precio,lang=call.from_user.language_code))
+            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin,lang) SELECT '{chatid}','{sku}','{precio}',{lang} WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=userid, sku=sku,precio=precio,lang=lang))
             con.commit()
             await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
             await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=None)
         else:
-            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
+            await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
     elif call.data.startswith('/togglets__'):
         # Callback para alternar la selección de una tienda en la lista de seguimiento
         # El formato del callback_data es: /togglets__TIENDA
@@ -256,26 +259,25 @@ async def callbacks(call):
         if len(parts) == 2:
             store = parts[1]
             cursor = con.cursor()
-            cursor.execute("SELECT searchstores FROM usuarios WHERE chatid=?;", (call.from_user.id,))
+            cursor.execute("SELECT searchstores FROM usuarios WHERE chatid=?;", (userid,))
             row = cursor.fetchone()
             if row is None or row[0] is None:
                 stores_selected = set()
             else:
                 stores_selected = set(row[0].split('#'))
-            # print(f"Toggling store: {store} for user {call.from_user.id}")
+            # print(f"Toggling store: {store} for user {userid}")
             # print(f"Current selected stores: {stores_selected}")
             if store in stores_selected:
                 stores_selected.remove(store)
             else:
                 stores_selected.add(store)
-            cursor.execute("INSERT INTO usuarios(chatid,searchstores) VALUES ('{chatid}','{stores}') ON CONFLICT (chatid) DO UPDATE SET searchstores='{stores}' WHERE chatid='{chatid}';".format(chatid=call.from_user.id,stores='#'.join(stores_selected)))
+            cursor.execute("INSERT INTO usuarios(chatid,searchstores) VALUES ('{chatid}','{stores}') ON CONFLICT (chatid) DO UPDATE SET searchstores='{stores}' WHERE chatid='{chatid}';".format(chatid=userid,stores='#'.join(stores_selected)))
             con.commit()
             # print(call.message)
-            await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=botonera_select_stores(call.from_user.id,stores_selected))
+            await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=botonera_select_stores(userid,stores_selected))
         else:
-            await bot.answer_callback_query(call.id, text(call.from_user.language_code,'commandincorrect'))
+            await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
 
 if __name__ == "__main__":
-    update_cambios()
     inicializa_basedatos()
     asyncio.run(main())
