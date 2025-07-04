@@ -189,6 +189,10 @@ async def echo_message(message):
     cursor = con.cursor()
     cursor.execute("SELECT storedefault FROM usuarios WHERE chatid=?;", (message.from_user.id,))
     row = cursor.fetchone()
+    if row is None or row[0] is None:
+        # Si no hay tienda por defecto, se usa España
+        await bot.reply_to(message, text(message.from_user.language_code,'nosearchstore'))
+        row = ['ESP']
     skus=buscar_sku(cadbusqueda, 'ESP' if row is None else row[0])
     if skus is None:
         await bot.reply_to(message, text(message.from_user.language_code,'no_results'))

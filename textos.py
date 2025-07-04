@@ -15,6 +15,7 @@ textos={
         'no_trackings':"No tienes seguimientos activos.",
         'mytrackingstores':"Selecciona las tiendas donde quieres realizar los seguimientos.",
         'newcheatprize':"Nuevo precio más barato en {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>",
+        'nosearchstore':"No has seleccionado ninguna tienda para realizar la busqueda, usando Spain por defecto, usa /mitienda para especificar tu tienda de busquedas.",
     },
     'en':{
         'start':"Hello.\nWelcome to the biggest search bot for the best prices on PSN.",
@@ -30,6 +31,7 @@ textos={
         'no_trackings':"You have no active trackings.",
         'mytrackingstores':"Select the stores where you want to track prices.",
         'newcheatprize':"New cheapest price in {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>",
+        'nosearchstore':"You have not selected any store for searching, using Spain by default, use /mystore to specify your search store.",
     },
 }
 
