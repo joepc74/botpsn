@@ -10,6 +10,7 @@ stores={
     'TUR':{'name':'Turkey',    'flag':'🇹🇷', 'psnlocale': 'en-tr', 'currency': 'try', 'regex': r"(\d*\.*\d+,\d+)\sTL",   'coinlocale':'es_ES'},
     'HKG':{'name':'Hong Kong', 'flag':'🇭🇰', 'psnlocale': 'en-hk', 'currency': 'hkd', 'regex': r"HK\$(\d+\.\d+)",        'coinlocale':'en_EN'},
     'USA':{'name':'USA',       'flag':'🇺🇸', 'psnlocale': 'en-us', 'currency': 'usd', 'regex': r"\$(\d+\.\d+)",          'coinlocale':'en_EN'},
+    'UKR':{'name':'Ukraine',   'flag':'🇺🇦', 'psnlocale': 'uk-ua', 'currency': 'uah', 'regex': r"UAH\s(\d*\s*\d+\,*\d*)",'coinlocale':'uk_UA'},
 }
 
 def buscar_sku(texto,storecode='ESP'):
@@ -100,7 +101,7 @@ async def get_game_info(sku,cambios,con):
                         con.commit()
                         continue
                     locale.setlocale(locale.LC_ALL, data['coinlocale'])
-                    preciol=locale.atof(preciore.group(1))
+                    preciol=locale.atof(preciore.group(1).replace(' ', ''))
                     precio=preciol
                     if (data['currency'] is not None):
                         precio = preciol / cambios[data['currency']]
