@@ -281,8 +281,7 @@ async def callbacks(call):
                 stores_selected.add(store)
             cursor.execute("INSERT INTO usuarios(chatid,searchstores) VALUES ('{chatid}','{stores}') ON CONFLICT (chatid) DO UPDATE SET searchstores='{stores}' WHERE chatid='{chatid}';".format(chatid=userid,stores='#'.join(stores_selected)))
             con.commit()
-            # print(call.message)
-            await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=botonera_select_stores(userid,stores_selected))
+            await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text=text(lang,'mytrackingstores'), reply_markup=botonera_select_stores(userid,stores_selected))
         else:
             await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
 
