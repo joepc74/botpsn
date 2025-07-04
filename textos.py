@@ -14,6 +14,7 @@ textos={
         'prizenocheap':"Precio en {store} {flag} : {precio:.2f} €\n",
         'no_trackings':"No tienes seguimientos activos.",
         'mytrackingstores':"Selecciona las tiendas donde quieres realizar los seguimientos.",
+        'newcheatprize':"Nuevo precio más barato en {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>",
     },
     'en':{
         'start':"Hello.\nWelcome to the biggest search bot for the best prices on PSN.",
@@ -28,6 +29,7 @@ textos={
         'prizenocheap':"Price in {store} {flag} : {precio:.2f} €\n",
         'no_trackings':"You have no active trackings.",
         'mytrackingstores':"Select the stores where you want to track prices.",
+        'newcheatprize':"New cheapest price in {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>",
     },
 }
 

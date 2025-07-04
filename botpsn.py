@@ -51,10 +51,10 @@ async def actualiza_trackings():
     cursor= con.cursor()
     while True:
         print("Checking for price updates...")
-        seguimentos= cursor.execute("SELECT chatid,sku,preciomin FROM trackings;").fetchall()
+        seguimentos= cursor.execute("SELECT chatid,sku,preciomin,lang FROM trackings;").fetchall()
         if seguimentos:
             for seguimiento in seguimentos:
-                chatid, sku, preciomin = seguimiento
+                chatid, sku, preciomin,lang = seguimiento
                 # obtiene las tiendas seleccionadas por el usuario
                 info = await get_game_info(sku, cambios, con)
                 if info is None:
@@ -63,7 +63,7 @@ async def actualiza_trackings():
                 # si el precio actual es menor que el precio mínimo registrado, envía un mensaje al usuario
                 if precio_actual < preciomin:
                     mensaje = f"<b>{titulo}</b>\n"
-                    mensaje += "Nuevo precio más barato en {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>".format(store=stores[tienda]['name'], flag=stores[tienda]['flag'], precio=precio_actual, url=url_product(sku, tienda))
+                    mensaje += text(lang,'newcheatprize').format(store=stores[tienda]['name'], flag=stores[tienda]['flag'], precio=precio_actual, url=url_product(sku, tienda))
                     try:
                         # se envía el mensaje al usuario
                         await bot.send_message(chatid, mensaje, parse_mode='HTML')
@@ -243,7 +243,7 @@ async def callbacks(call):
             sku = parts[1]
             precio=parts[2]
             cursor = con.cursor()
-            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin) SELECT '{chatid}','{sku}','{precio}' WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=call.from_user.id, sku=sku,precio=precio))
+            cursor.execute("INSERT INTO trackings(chatid,sku,preciomin,lang) SELECT '{chatid}','{sku}','{precio}',{lang} WHERE NOT EXISTS(SELECT chatid,sku FROM trackings WHERE chatid = '{chatid}' AND sku = '{sku}');".format(chatid=call.from_user.id, sku=sku,precio=precio,lang=call.from_user.language_code))
             con.commit()
             await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
             await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=None)
