@@ -1,3 +1,5 @@
+# /bin/python3
+
 import requests
 from stores import *
 import sqlite3
