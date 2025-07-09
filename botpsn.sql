@@ -6,7 +6,7 @@ CREATE TABLE "busquedas" (
 	"store"	TEXT NOT NULL,
 	"titulo"	TEXT NOT NULL DEFAULT 'Unknown',
 	"precio"	REAL NOT NULL,
-	"actualizado"	INTEGER NOT NULL DEFAULT (unixepoch()),
+	"actualizado"	INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 DROP TABLE IF EXISTS "trackings";

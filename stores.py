@@ -1,17 +1,28 @@
 # Listado de currencies en https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies.json
 from bs4 import BeautifulSoup
-import requests, re, locale, json, asyncio, time
+import requests, re, json, asyncio, time
 
 sem = asyncio.Semaphore()
 
 stores={
-    'ESP':{'name':'Spain',     'flag':'🇪🇸', 'psnlocale': 'es-es', 'currency': None , 'regex': r"(\d+\,\d+)\s€",         'coinlocale':'es_ES'},
-    'IND':{'name':'India',     'flag':'🇮🇳', 'psnlocale': 'en-in', 'currency': 'inr', 'regex': r"Rs\s(\d+,\d+)",         'coinlocale':'en_IN'},
-    'TUR':{'name':'Turkey',    'flag':'🇹🇷', 'psnlocale': 'en-tr', 'currency': 'try', 'regex': r"(\d*\.*\d+,\d+)\sTL",   'coinlocale':'es_ES'},
-    'HKG':{'name':'Hong Kong', 'flag':'🇭🇰', 'psnlocale': 'en-hk', 'currency': 'hkd', 'regex': r"HK\$(\d+\.\d+)",        'coinlocale':'en_EN'},
-    'USA':{'name':'USA',       'flag':'🇺🇸', 'psnlocale': 'en-us', 'currency': 'usd', 'regex': r"\$(\d+\.\d+)",          'coinlocale':'en_EN'},
-    'UKR':{'name':'Ukraine',   'flag':'🇺🇦', 'psnlocale': 'uk-ua', 'currency': 'uah', 'regex': r"UAH\s(\d*\s*\d+\,*\d*)",'coinlocale':'uk_UA'},
+    'ESP':{'name':'Spain',     'flag':'🇪🇸', 'psnlocale': 'es-es', 'currency': None , 'regex': r"(\d+\,\d+)\s€",         'transformcode':'ESP'},
+    'IND':{'name':'India',     'flag':'🇮🇳', 'psnlocale': 'en-in', 'currency': 'inr', 'regex': r"Rs\s(\d+,\d+)",         'transformcode':'IND'},
+    'TUR':{'name':'Turkey',    'flag':'🇹🇷', 'psnlocale': 'en-tr', 'currency': 'try', 'regex': r"(\d*\.*\d+,\d+)\sTL",   'transformcode':'ESP'},
+    'HKG':{'name':'Hong Kong', 'flag':'🇭🇰', 'psnlocale': 'en-hk', 'currency': 'hkd', 'regex': r"HK\$(\d+\.\d+)",        'transformcode':None},
+    'USA':{'name':'USA',       'flag':'🇺🇸', 'psnlocale': 'en-us', 'currency': 'usd', 'regex': r"\$(\d+\.\d+)",          'transformcode':None},
+    'UKR':{'name':'Ukraine',   'flag':'🇺🇦', 'psnlocale': 'uk-ua', 'currency': 'uah', 'regex': r"UAH\s(\d*\s*\d+\,*\d*)",'transformcode':'UKR'},
 }
+
+def cointransform(texto, transformcode):
+    if (transformcode==None):
+        return texto
+    if transformcode=='ESP':
+        return texto.replace('.', '').replace(',', '.')
+    if transformcode=='IND':
+        return texto.replace(',', '')
+    if transformcode=='UKR':
+        return texto.replace(' ', '').replace(',', '.')
+    return texto
 
 def buscar_sku(texto,storecode='ESP'):
     resultados={}
@@ -100,8 +111,8 @@ async def get_game_info(sku,cambios,con):
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
                         continue
-                    locale.setlocale(locale.LC_ALL, data['coinlocale'])
-                    preciol=locale.atof(preciore.group(1).replace(' ', ''))
+                    preciol=float(cointransform(preciore.group(1),data['transformcode']))
+                    # print(preciore.group(1),data,preciol)
                     precio=preciol
                     if (data['currency'] is not None):
                         precio = preciol / cambios[data['currency']]
