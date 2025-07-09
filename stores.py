@@ -17,7 +17,7 @@ def buscar_sku(texto,storecode='ESP'):
     resultados={}
     store=stores[storecode]
     url = f"https://store.playstation.com/{store['psnlocale']}/search/{texto}"
-    # print(f'Fetching {url} for {store['name']}')
+    # print(f"Fetching {url} for {store['name']}")
 
     response = requests.get(url)
     if response.status_code != 200:
@@ -44,7 +44,7 @@ def buscar_sku(texto,storecode='ESP'):
     return resultados
 
 def url_product(sku,storecode='ESP'):
-    return f'https://store.playstation.com/{stores[storecode]['psnlocale']}/product/{sku}'
+    return f"https://store.playstation.com/{stores[storecode]['psnlocale']}/product/{sku}"
 
 async def get_game_info(sku,cambios,con):
     global sem
@@ -83,7 +83,7 @@ async def get_game_info(sku,cambios,con):
 
                 if titulo==None:
                     titulo=ficha.find('h1').text.strip()
-                # print(f'Title: {titulo} Store: {data['name']}')
+                # print(f"Title: {titulo} Store: {data['name']}")
                 title_elements = ficha.find_all('label', class_='psw-label')
                 # print(title_elements)
                 for title_element in title_elements:
@@ -94,7 +94,7 @@ async def get_game_info(sku,cambios,con):
                     texto=title_element.find('span',class_='psw-t-title-m').text.strip()
                     if texto in ['Game Trial','Prueba de juego']:
                         continue
-                    # print(f'Title: {titulo} Store: {data['name']} -> {texto}')
+                    # print(f"Title: {titulo} Store: {data['name']} -> {texto}")
                     preciore=re.search(data['regex'], texto)
                     if preciore is None:
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
