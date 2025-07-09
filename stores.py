@@ -16,7 +16,7 @@ stores={
 def buscar_sku(texto,storecode='ESP'):
     resultados={}
     store=stores[storecode]
-    url = f'https://store.playstation.com/{store['psnlocale']}/search/{texto}'
+    url = f"https://store.playstation.com/{store['psnlocale']}/search/{texto}"
     # print(f'Fetching {url} for {store['name']}')
 
     response = requests.get(url)
