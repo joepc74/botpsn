@@ -46,3 +46,7 @@ El script genera un archivo de log llamado `botpsn.log` en el directorio princip
 ```bash
 python botpsn.py -debug
 ```
+
+## Base de datos
+
+Es necesario crear un archivo `botpsn.db` en formato SQLite3 para almacenar los datos de los juegos y precios. En el archivo `botpsn.sql` encontrarás la secuencia SQL necesaria para inicializar la base de datos en blanco. Ejecuta este script SQL sobre una base de datos SQLite3 vacía antes de usar el proyecto.
