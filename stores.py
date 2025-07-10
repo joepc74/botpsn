@@ -74,33 +74,34 @@ async def get_game_info(sku,cambios,con):
             cursor.execute("SELECT * FROM busquedas WHERE sku=? AND store=? AND actualizado>?;", (sku,store,int(time.time())-3*60*60))
             rows = cursor.fetchall()
             if rows==[]:
-                # print(f'Fetching {sku} for {store}...')
+                print(f'Fetching {sku} for {store}...')
                 url = url_product(sku, store)
 
                 response = requests.get(url, headers=headers)
                 if response.status_code != 200:
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
-
+                    print(f'Error fetching {sku} for {store}: {response.status_code}')
                     continue
                 soup = BeautifulSoup(response.content, 'html.parser')
 
                 ficha = soup.find('div', class_='psw-pdp-card-anchor')
                 if ficha is None:
-                    # print(f'No product found for {sku} in {store[0]} -> {url}')
+                    print(f'No product found for {sku} in {store[0]} -> {url}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
                     continue
 
                 if titulo==None:
                     titulo=ficha.find('h1').text.strip()
-                # print(f"Title: {titulo} Store: {data['name']}")
+                print(f"Title: {titulo} Store: {data['name']}")
                 title_elements = ficha.find_all('label', class_='psw-label')
                 # print(title_elements)
                 for title_element in title_elements:
                     if title_element.find('span', class_='psw-icon') is not None:
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
+                        print(f"Skipping title element with icon in {store} for {sku}")
                         continue
                     texto=title_element.find('span',class_='psw-t-title-m').text.strip()
                     if texto in ['Game Trial','Prueba de juego']:
@@ -110,9 +111,10 @@ async def get_game_info(sku,cambios,con):
                     if preciore is None:
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
+                        print(f'No price found for {sku} in {store} -> {texto}')
                         continue
                     preciol=float(cointransform(preciore.group(1),data['transformcode']))
-                    # print(preciore.group(1),data,preciol)
+                    print(preciore.group(1),data,preciol)
                     precio=preciol
                     if (data['currency'] is not None):
                         precio = preciol / cambios[data['currency']]
