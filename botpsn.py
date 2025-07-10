@@ -52,9 +52,9 @@ async def update_cambios():
         # Si falla, deja el valor anterior
         try:
             cambios=requests.get('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json').json()['eur']
-            print(f'Currency changes updated.')
+            logging.info(f'Currency changes updated.')
         except Exception as e:
-            print(f'Error updating currency changes: {e}')
+            logging.error(f'Error updating currency changes: {e}')
         await asyncio.sleep(12*60*60) # se ejecuta cada 12 horas
 
 ###########################################################
@@ -64,7 +64,7 @@ async def actualiza_trackings():
     global con
     cursor= con.cursor()
     while True:
-        print("Checking for price updates...")
+        logging.info("Checking for price updates...")
         seguimentos= cursor.execute("SELECT chatid,sku,preciomin,lang FROM trackings;").fetchall()
         if seguimentos:
             for seguimiento in seguimentos:
@@ -85,8 +85,8 @@ async def actualiza_trackings():
                         cursor.execute("UPDATE trackings SET preciomin=? WHERE chatid=? AND sku=?;", (precio_actual, chatid, sku))
                         con.commit()
                     except Exception as e:
-                        print(f"Error sending message to {chatid}: {e}")
-        print("Price updates checked.")
+                        logging.error(f"Error sending message to {chatid}: {e}")
+        logging.info("Price updates checked.")
         await asyncio.sleep(6*60*60) # se ejecuta cada 6 horas
 
 ###########################################################
@@ -122,11 +122,11 @@ def botonera_select_stores(chatid,stores_selected=None):
             stores_selected=set()
         else:
             stores_selected=set(stores_selected['searchstores'].split('#'))
-    # print(f"---Selected stores for user {chatid}: {stores_selected}")
+    # logging.info(f"---Selected stores for user {chatid}: {stores_selected}")
     keyboard=[]
     for store,data in stores.items():
-        # print(f"---Adding store {store} to keyboard")
-        # print(f"---Store selected: {store in stores_selected}")
+        # logging.info(f"---Adding store {store} to keyboard")
+        # logging.info(f"---Store selected: {store in stores_selected}")
         keyboard.append([InlineKeyboardButton(
             f"{CHECK_CHAR if store in stores_selected else UNCHECK_CHAR} {data['name']} {data['flag']}",
             callback_data=f"/togglets__{store}"
@@ -175,7 +175,7 @@ async def retorna_info(message,sku, lang='es'):
                 mensaje+=text(lang,'prizecheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store))
             else:
                 mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio)
-        # print(mensaje)
+        # logging.info(mensaje)
         await bot.send_message(message.chat.id, mensaje, parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
 
 ###########################################################
@@ -192,7 +192,7 @@ async def echo_message(message):
         parts = message.text.split('_')
         if len(parts) == 2:
             id = parts[1]
-            # print(f"Untracking id: {id} for user {userid}")
+            # logging.info(f"Untracking id: {id} for user {userid}")
             cursor.execute("DELETE FROM trackings WHERE chatid=? AND id=?;", (userid, id))
             con.commit()
             await bot.reply_to(message, text(message.from_user.language_code,'untrackedsuccess'))
@@ -200,8 +200,8 @@ async def echo_message(message):
     if re.match(r'.*-.*-.*',message.text)!=None:
         await retorna_info(message,message.text, message.from_user.language_code)
         return
-    # print(message.chat.id)
-    # print(message.text)
+    # logging.info(message.chat.id)
+    # logging.info(message.text)
     await bot.send_chat_action(message.chat.id, 'typing')
     cadbusqueda=message.text.lower().split()
     cursor.execute("SELECT storedefault FROM usuarios WHERE chatid=?;", (userid,))
@@ -214,7 +214,7 @@ async def echo_message(message):
     if skus is None:
         await bot.reply_to(message, text(message.from_user.language_code,'no_results'))
         return
-    # print(skus)
+    # logging.info(skus)
     keyboard = types.InlineKeyboardMarkup()
     for sku,result in skus.items():
         texto= f"{result[0]} - {result[1]} {stores[result[2]]['flag']}"
@@ -237,7 +237,7 @@ async def callbacks(call):
         if len(parts) == 3:
             sku = parts[1]
             # tienda = parts[2]
-            # print(f"SKU: {sku}, Tienda: {tienda}")
+            # logging.info(f"SKU: {sku}, Tienda: {tienda}")
             await retorna_info(call.message, sku, lang)
             return
         else:
@@ -251,7 +251,7 @@ async def callbacks(call):
             if store in stores:
                 global con
                 cursor = con.cursor()
-                # print(f"Seleccionando tienda: {store} para el usuario {userid}")
+                # logging.info(f"Seleccionando tienda: {store} para el usuario {userid}")
                 cursor.execute("INSERT INTO usuarios(chatid,storedefault) VALUES ('{chatid}','{store}') ON CONFLICT (chatid) DO UPDATE SET storedefault='{store}' WHERE chatid='{chatid}';".format(chatid=userid,store=store))
                 con.commit()
                 await bot.send_message(call.message.chat.id, text(lang,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
@@ -287,8 +287,8 @@ async def callbacks(call):
                 stores_selected = set()
             else:
                 stores_selected = set(row[0].split('#'))
-            # print(f"Toggling store: {store} for user {userid}")
-            # print(f"Current selected stores: {stores_selected}")
+            # logging.info(f"Toggling store: {store} for user {userid}")
+            # logging.info(f"Current selected stores: {stores_selected}")
             if store in stores_selected:
                 stores_selected.remove(store)
             else:
@@ -300,5 +300,9 @@ async def callbacks(call):
             await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
 
 if __name__ == "__main__":
+    if ('-debug' in sys.argv):
+        logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',datefmt='%Y-%m-%dT%H:%M:%S',level=logging.DEBUG)
+    else:
+        logging.basicConfig(filename='botpsn.log',format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',datefmt='%Y-%m-%dT%H:%M:%S',level=logging.DEBUG)
     inicializa_basedatos()
     asyncio.run(main())

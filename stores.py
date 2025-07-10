@@ -1,6 +1,7 @@
 # Listado de currencies en https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies.json
+import sys
 from bs4 import BeautifulSoup
-import requests, re, json, asyncio, time
+import requests, re, json, asyncio, time, logging
 
 sem = asyncio.Semaphore()
 
@@ -28,7 +29,7 @@ def buscar_sku(texto,storecode='ESP'):
     resultados={}
     store=stores[storecode]
     url = f"https://store.playstation.com/{store['psnlocale']}/search/{texto}"
-    # print(f"Fetching {url} for {store['name']}")
+    # logging.info(f"Fetching {url} for {store['name']}")
 
     response = requests.get(url)
     if response.status_code != 200:
@@ -74,61 +75,61 @@ async def get_game_info(sku,cambios,con):
             cursor.execute("SELECT * FROM busquedas WHERE sku=? AND store=? AND actualizado>?;", (sku,store,int(time.time())-3*60*60))
             rows = cursor.fetchall()
             if rows==[]:
-                print(f'Fetching {sku} for {store}...')
+                logging.debug(f'Fetching {sku} for {store}...')
                 url = url_product(sku, store)
 
                 response = requests.get(url, headers=headers)
                 if response.status_code != 200:
+                    logging.debug(f'Error fetching {sku} for {store}: {response.status_code}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
-                    print(f'Error fetching {sku} for {store}: {response.status_code}')
                     continue
                 soup = BeautifulSoup(response.content, 'html.parser')
 
                 ficha = soup.find('div', class_='psw-pdp-card-anchor')
                 if ficha is None:
-                    print(f'No product found for {sku} in {store[0]} -> {url}')
+                    logging.debug(f'No product found for {sku} in {store[0]} -> {url}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
                     continue
 
                 if titulo==None:
                     titulo=ficha.find('h1').text.strip()
-                print(f"Title: {titulo} Store: {data['name']}")
+                logging.debug(f"Title: {titulo} Store: {data['name']}")
                 title_elements = ficha.find_all('label', class_='psw-label')
                 # print(title_elements)
                 for title_element in title_elements:
                     if title_element.find('span', class_='psw-icon') is not None:
+                        logging.debug(f"Skipping title element with icon in {store} for {sku}")
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
-                        print(f"Skipping title element with icon in {store} for {sku}")
                         continue
                     texto=title_element.find('span',class_='psw-t-title-m').text.strip()
                     if texto in ['Game Trial','Prueba de juego']:
                         continue
-                    # print(f"Title: {titulo} Store: {data['name']} -> {texto}")
+                    # logging.info(f"Title: {titulo} Store: {data['name']} -> {texto}")
                     preciore=re.search(data['regex'], texto)
                     if preciore is None:
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
-                        print(f'No price found for {sku} in {store} -> {texto}')
+                        logging.info(f'No price found for {sku} in {store} -> {texto}')
                         continue
                     preciol=float(cointransform(preciore.group(1),data['transformcode']))
-                    print(preciore.group(1),data,preciol)
+                    logging.debug("{} {} {}".format(preciore.group(1),data,preciol))
                     precio=preciol
                     if (data['currency'] is not None):
                         precio = preciol / cambios[data['currency']]
                     if(precio < preciomasbarato):
                         preciomasbarato = precio
                         tiendamasbarata = store
-                    # print(f'Price of {titulo}: {texto} ({store}) -> {precio:.2f} €')
+                    # logging.info(f'Price of {titulo}: {texto} ({store}) -> {precio:.2f} €')
                     cursor.execute("INSERT INTO busquedas (sku, store, titulo, precio) VALUES (?, ?, ?, ?);", (sku, store, titulo, precio))
                     con.commit()
                     resultados.append([precio, store])
             else:
                 for row in rows:
                     precio = row['precio']
-                    # print(f'Using cached price for {sku} in {store}: {precio}')
+                    # logging.info(f'Using cached price for {sku} in {store}: {precio}')
                     if precio==None or precio=='null':
                         continue
                     if(precio < preciomasbarato):
@@ -140,7 +141,7 @@ async def get_game_info(sku,cambios,con):
         finally:
             sem.release()
     # if titulo!= None:
-    #     print(f'Cheapest price of {titulo}: {preciomasbarato:.2f} in {tiendamasbarata}')
+    #     prlogging.infoint(f'Cheapest price of {titulo}: {preciomasbarato:.2f} in {tiendamasbarata}')
     return [titulo, resultados, tiendamasbarata,preciomasbarato]
 
 def get_game_title(sku,con, store='ESP'):

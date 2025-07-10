@@ -2,3 +2,4 @@ __pycache__/*
 config.py
 botpsn.py
 botpsn.db
+botpsn.log
