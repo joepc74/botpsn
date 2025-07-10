@@ -251,7 +251,7 @@ async def callbacks(call):
             if store in stores:
                 global con
                 cursor = con.cursor()
-                # logging.info(f"Seleccionando tienda: {store} para el usuario {userid}")
+                logging.info(f"Seleccionando tienda de busquedas: {store} para el usuario {userid}")
                 cursor.execute("INSERT INTO usuarios(chatid,storedefault) VALUES ('{chatid}','{store}') ON CONFLICT (chatid) DO UPDATE SET storedefault='{store}' WHERE chatid='{chatid}';".format(chatid=userid,store=store))
                 con.commit()
                 await bot.send_message(call.message.chat.id, text(lang,'selectedstore')+f" {stores[store]['name']} {stores[store]['flag']}")
@@ -272,6 +272,7 @@ async def callbacks(call):
             con.commit()
             await bot.answer_callback_query(call.id, "SKU añadido a seguimiento.")
             await bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.id, reply_markup=None)
+            logging.info(f"User {userid} has started tracking SKU {sku} with minimum price {precio} in language {lang}.")
         else:
             await bot.answer_callback_query(call.id, text(lang,'commandincorrect'))
     elif call.data.startswith('/togglets__'):
@@ -287,8 +288,8 @@ async def callbacks(call):
                 stores_selected = set()
             else:
                 stores_selected = set(row[0].split('#'))
-            # logging.info(f"Toggling store: {store} for user {userid}")
-            # logging.info(f"Current selected stores: {stores_selected}")
+            logging.info(f"Toggling store: {store} for user {userid}")
+            logging.info(f"Current selected stores: {stores_selected}")
             if store in stores_selected:
                 stores_selected.remove(store)
             else:
