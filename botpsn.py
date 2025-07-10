@@ -146,16 +146,16 @@ async def select_tracking_stores(message):
 async def send_mytrackings(message):
     global con
     cursor = con.cursor()
-    cursor.execute("SELECT sku,preciomin FROM trackings WHERE chatid=?;", (message.from_user.id,))
+    cursor.execute("SELECT id, sku,preciomin FROM trackings WHERE chatid=?;", (message.from_user.id,))
     seguimientos = cursor.fetchall()
     lang=message.from_user.language_code
     if not seguimientos:
         await bot.reply_to(message, text(lang,'no_trackings'))
         return
     respuesta=""
-    for sku, precio in seguimientos:
+    for id, sku, precio in seguimientos:
         # respuesta += "SKU: {sku} - Titulo: {titulo} - Precio mínimo: {precio:.2f} €\n".format(sku=sku, titulo=get_game_title(sku,con), precio=precio)
-        respuesta += text(lang,'mytracksline').format(sku=sku, titulo=get_game_title(sku,con), precio=precio)
+        respuesta += text(lang,'mytracksline').format(sku=sku, titulo=get_game_title(sku,con), precio=precio, id=id)
     await bot.reply_to(message, respuesta, parse_mode='HTML')
     # await bot.delete_message(message.chat.id, message.id)  # Elimina el mensaje original para evitar spam
 
@@ -183,6 +183,20 @@ async def retorna_info(message,sku, lang='es'):
 ###########################################################
 @bot.message_handler(func=lambda message: True)
 async def echo_message(message):
+    global con
+    cursor = con.cursor()
+    userid= message.from_user.id
+    if message.text.startswith('/untrack_'):
+        # Callback para dejar de trackear un SKU
+        # El formato del callback_data es: /untrack_SKU
+        parts = message.text.split('_')
+        if len(parts) == 2:
+            id = parts[1]
+            # print(f"Untracking id: {id} for user {userid}")
+            cursor.execute("DELETE FROM trackings WHERE chatid=? AND id=?;", (userid, id))
+            con.commit()
+            await bot.reply_to(message, text(message.from_user.language_code,'untrackedsuccess'))
+            return
     if re.match(r'.*-.*-.*',message.text)!=None:
         await retorna_info(message,message.text, message.from_user.language_code)
         return
@@ -190,9 +204,7 @@ async def echo_message(message):
     # print(message.text)
     await bot.send_chat_action(message.chat.id, 'typing')
     cadbusqueda=message.text.lower().split()
-    global con
-    cursor = con.cursor()
-    cursor.execute("SELECT storedefault FROM usuarios WHERE chatid=?;", (message.from_user.id,))
+    cursor.execute("SELECT storedefault FROM usuarios WHERE chatid=?;", (userid,))
     row = cursor.fetchone()
     if row is None or row[0] is None:
         # Si no hay tienda por defecto, se usa España
