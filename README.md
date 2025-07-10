@@ -4,11 +4,11 @@ Este proyecto permite consultar y comparar precios de juegos de PlayStation en d
 
 ## Requisitos
 - Python 3.12 o superior
-- Paquetes: `requests`, `beautifulsoup4`
+- Paquetes: `requests`, `beautifulsoup4` `telebot`
 
 Instalación de dependencias:
 ```bash
-pip install requests beautifulsoup4
+pip install requests beautifulsoup4 telebot
 ```
 
 ## Uso
