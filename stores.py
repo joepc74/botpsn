@@ -88,7 +88,7 @@ async def get_game_info(sku,cambios,con):
 
                 ficha = soup.find('div', class_='psw-pdp-card-anchor')
                 if ficha is None:
-                    logging.debug(f'No product found for {sku} in {store[0]} -> {url}')
+                    logging.debug(f'No product found for {sku} in {store} -> {url}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
                     continue
