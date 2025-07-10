@@ -27,3 +27,14 @@ El script buscará los precios en las tiendas configuradas en `stores.py` y most
 ## Notas
 - El script utiliza la API de currency-api para obtener tasas de cambio y convertir precios a euros si es necesario.
 - Asegúrate de que las expresiones regulares y configuraciones en `stores.py` estén actualizadas para cada tienda soportada.
+
+## Configuración (`config.py`)
+
+Crea un archivo `config.py` en el directorio principal con la siguiente estructura:
+
+```python
+# Clave de la API para currency-api
+TELEGRAM_TOKEN = "tu_clave_api_aqui"
+```
+
+Asegúrate de mantener tu clave de API segura y no compartirla públicamente.
