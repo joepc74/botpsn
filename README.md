@@ -38,3 +38,11 @@ TELEGRAM_TOKEN = "tu_clave_api_aqui"
 ```
 
 Asegúrate de mantener tu clave de API segura y no compartirla públicamente.
+
+## Registro de actividad (logs)
+
+El script genera un archivo de log llamado `botpsn.log` en el directorio principal con información sobre la ejecución. Si deseas ver los mensajes de log directamente en pantalla, ejecuta el script con el parámetro de línea de comando `-debug`:
+
+```bash
+python botpsn.py -debug
+```
