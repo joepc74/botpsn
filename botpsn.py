@@ -192,7 +192,7 @@ async def echo_message(message):
         parts = message.text.split('_')
         if len(parts) == 2:
             id = parts[1]
-            # logging.info(f"Untracking id: {id} for user {userid}")
+            logging.info(f"Untracking id: {id} for user {userid}")
             cursor.execute("DELETE FROM trackings WHERE chatid=? AND id=?;", (userid, id))
             con.commit()
             await bot.reply_to(message, text(message.from_user.language_code,'untrackedsuccess'))
@@ -200,8 +200,8 @@ async def echo_message(message):
     if re.match(r'.*-.*-.*',message.text)!=None:
         await retorna_info(message,message.text, message.from_user.language_code)
         return
-    # logging.info(message.chat.id)
-    # logging.info(message.text)
+    # logging.debug(message.chat.id)
+    # logging.debug(message.text)
     await bot.send_chat_action(message.chat.id, 'typing')
     cadbusqueda=message.text.lower().split()
     cursor.execute("SELECT storedefault FROM usuarios WHERE chatid=?;", (userid,))
@@ -211,16 +211,18 @@ async def echo_message(message):
         await bot.reply_to(message, text(message.from_user.language_code,'nosearchstore'))
         row = ['ESP']
     skus=buscar_sku(cadbusqueda, 'ESP' if row is None else row[0])
-    if skus is None:
+    # logging.info(f"Searching for {cadbusqueda} in store {row[0]}: {skus}")
+    if skus is None or skus == {}:
+        logging.info(f"No results found for {cadbusqueda} in store {row[0]}")
         await bot.reply_to(message, text(message.from_user.language_code,'no_results'))
         return
-    # logging.info(skus)
+    # logging.debug(skus)
     keyboard = types.InlineKeyboardMarkup()
     for sku,result in skus.items():
         texto= f"{result[0]} - {result[1]} {stores[result[2]]['flag']}"
         callback_data = f"/sku {sku} {result[2]}"
         keyboard.add(types.InlineKeyboardButton(text=texto, callback_data=callback_data))
-    await bot.send_message(message.chat.id, text=text(message.from_user.language_code,'resultsfound'), reply_markup=keyboard)
+    await bot.reply_to(message, text=text(message.from_user.language_code,'resultsfound'), reply_markup=keyboard)
 
 ###########################################################
 # Callbacks para los botones de resultados
