@@ -7,7 +7,7 @@ sem = asyncio.Semaphore()
 
 stores={
     'ESP':{'name':'Spain',     'flag':'🇪🇸', 'psnlocale': 'es-es', 'currency': None , 'regex': r"(\d+\,\d+)\s€",         'transformcode':'ESP'},
-    'IND':{'name':'India',     'flag':'🇮🇳', 'psnlocale': 'en-in', 'currency': 'inr', 'regex': r"Rs\s(\d+,\d+)",         'transformcode':'IND'},
+    'IND':{'name':'India',     'flag':'🇮🇳', 'psnlocale': 'en-in', 'currency': 'inr', 'regex': r"Rs\s(\d+,?\d*)",         'transformcode':'IND'},
     'TUR':{'name':'Turkey',    'flag':'🇹🇷', 'psnlocale': 'en-tr', 'currency': 'try', 'regex': r"(\d*\.*\d+,\d+)\sTL",   'transformcode':'ESP'},
     'HKG':{'name':'Hong Kong', 'flag':'🇭🇰', 'psnlocale': 'en-hk', 'currency': 'hkd', 'regex': r"HK\$(\d+\.\d+)",        'transformcode':None},
     'USA':{'name':'USA',       'flag':'🇺🇸', 'psnlocale': 'en-us', 'currency': 'usd', 'regex': r"\$(\d+\.\d+)",          'transformcode':None},
