@@ -86,7 +86,7 @@ async def actualiza_trackings():
                         con.commit()
                     except Exception as e:
                         logging.error(f"Error sending message to {chatid}: {e}")
-        logging.info("Price updates checked.")
+        logging.info("Price updates checked. Next check in 6 hours.")
         await asyncio.sleep(6*60*60) # se ejecuta cada 6 horas
 
 ###########################################################
