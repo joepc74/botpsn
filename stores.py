@@ -103,7 +103,7 @@ async def get_game_info(sku,cambios,con, skip_cache=False):
                 # print(title_elements)
                 for title_element in title_elements:
                     if title_element.find('span', class_='psw-icon') is not None:
-                        logging.debug(f"Skipping title element with icon in {store} for {sku}")
+                        logging.info(f"Skipping plus element in {store} for {sku}")
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
                         continue
