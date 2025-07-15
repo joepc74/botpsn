@@ -115,7 +115,7 @@ async def get_game_info(sku,cambios,con, skip_cache=False):
                     if preciore is None:
                         cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                         con.commit()
-                        logging.info(f'No price found for {sku} in {store} -> {texto}')
+                        logging.warning(f'No price found for {sku} in {store} -> {texto}')
                         continue
                     preciol=float(cointransform(preciore.group(1),data['transformcode']))
                     logging.debug("{} {} {}".format(preciore.group(1),data,preciol))
