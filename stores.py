@@ -83,7 +83,7 @@ async def get_game_info(sku,cambios,con, skip_cache=False):
 
                 response = requests.get(url, headers=headers)
                 if response.status_code != 200:
-                    logging.debug(f'Error fetching {sku} for {store}: {response.status_code}')
+                    logging.warning(f'Error fetching {sku} for {store}: {response.status_code}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
                     continue
@@ -91,7 +91,7 @@ async def get_game_info(sku,cambios,con, skip_cache=False):
 
                 ficha = soup.find('div', class_='psw-pdp-card-anchor') if soup.find('div', class_='psw-pdp-card-anchor') else soup.find('div', class_='psw-c-bg-card-1')
                 if ficha is None:
-                    logging.debug(f'No product found for {sku} in {store} -> {url}')
+                    logging.warning(f'No product found for {sku} in {store} -> {url}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
                     con.commit()
                     continue
