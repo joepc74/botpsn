@@ -163,7 +163,7 @@ async def send_mytrackings(message):
 # Funcion que devuelve el info de un sku
 ###########################################################
 async def retorna_info(message,sku, lang='es'):
-    await bot.send_chat_action(message.chat.id, 'typing')
+    mensaje_respuesta=await bot.send_message(message.chat.id, text(lang,'searching'), parse_mode='HTML')
     info = await get_game_info(sku, cambios,con)
     if info is None:
         await bot.reply_to(message, "No se encontró información para este SKU.")
@@ -176,7 +176,7 @@ async def retorna_info(message,sku, lang='es'):
             else:
                 mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio)
         # logging.info(mensaje)
-        await bot.send_message(message.chat.id, mensaje, parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
+        await bot.edit_message_text(mensaje, chat_id=message.chat.id, message_id=mensaje_respuesta.message_id , parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
 
 ###########################################################
 # Resto comandos

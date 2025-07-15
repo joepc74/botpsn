@@ -18,6 +18,7 @@ textos={
         'nosearchstore':"No has seleccionado ninguna tienda para realizar la busqueda, usando Spain por defecto, usa /mitienda para especificar tu tienda de busquedas.",
         'mytracksline':"Titulo: {titulo} - Precio mínimo: {precio:.2f} € - /untrack_{id}\n",
         'untrackedsuccess':"Seguimiento eliminado correctamente.",
+        'searching':"Buscando precios...",
     },
     'en':{
         'start':"Hello.\nWelcome to the biggest search bot for the best prices on PSN.",
@@ -36,6 +37,7 @@ textos={
         'nosearchstore':"You have not selected any store for searching, using Spain by default, use /mystore to specify your search store.",
         'mytracksline':"Title: {titulo} - Minimum price: {precio:.2f} € - /untrack_{id}\n",
         'untrackedsuccess':"Tracking successfully removed.",
+        'searching':"Searching for prices...",
     },
 }
 

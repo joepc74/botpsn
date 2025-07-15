@@ -58,7 +58,7 @@ def buscar_sku(texto,storecode='ESP'):
 def url_product(sku,storecode='ESP'):
     return f"https://store.playstation.com/{stores[storecode]['psnlocale']}/product/{sku}"
 
-async def get_game_info(sku,cambios,con):
+async def get_game_info(sku,cambios,con, skip_cache=False):
     global sem
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
@@ -72,8 +72,11 @@ async def get_game_info(sku,cambios,con):
         await sem.acquire()
         try:
             cursor = con.cursor()
-            cursor.execute("SELECT * FROM busquedas WHERE sku=? AND store=? AND actualizado>?;", (sku,store,int(time.time())-3*60*60))
-            rows = cursor.fetchall()
+            if skip_cache==False:
+                cursor.execute("SELECT * FROM busquedas WHERE sku=? AND store=? AND actualizado>?;", (sku,store,int(time.time())-3*60*60))
+                rows = cursor.fetchall()
+            else:
+                rows = []
             if rows==[]:
                 logging.debug(f'Fetching {sku} for {store}...')
                 url = url_product(sku, store)
@@ -86,7 +89,7 @@ async def get_game_info(sku,cambios,con):
                     continue
                 soup = BeautifulSoup(response.content, 'html.parser')
 
-                ficha = soup.find('div', class_='psw-pdp-card-anchor')
+                ficha = soup.find('div', class_='psw-pdp-card-anchor') if soup.find('div', class_='psw-pdp-card-anchor') else soup.find('div', class_='psw-c-bg-card-1')
                 if ficha is None:
                     logging.debug(f'No product found for {sku} in {store} -> {url}')
                     cursor.execute("INSERT INTO busquedas (sku, store, precio) VALUES (?, ?, ?);", (sku, store, 'null'))
