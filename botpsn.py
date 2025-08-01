@@ -174,7 +174,7 @@ async def retorna_info(message,sku, lang='es'):
             if tienda==store:
                 mensaje+=text(lang,'prizecheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store))
             else:
-                mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio)
+                mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store))
         # logging.info(mensaje)
         await bot.edit_message_text(mensaje, chat_id=message.chat.id, message_id=mensaje_respuesta.message_id , parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
 
