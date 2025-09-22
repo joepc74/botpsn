@@ -16,7 +16,7 @@ textos={
         'mytrackingstores':"Selecciona las tiendas donde quieres realizar los seguimientos.",
         'newcheatprize':"Nuevo precio más barato en {store} {flag}: {precio:.2f} € <a href='{url}'>🏪🏪🏪</a>",
         'nosearchstore':"No has seleccionado ninguna tienda para realizar la busqueda, usando Spain por defecto, usa /mitienda para especificar tu tienda de busquedas.",
-        'mytracksline':"Titulo: {titulo} - Precio mínimo: {precio:.2f} € - /untrack_{id}\n",
+        'mytracksline':"Titulo: {titulo} - Precio mínimo: {precio:.2f} € - /untrack_{id} /info_{id}\n",
         'untrackedsuccess':"Seguimiento eliminado correctamente.",
         'searching':"Buscando precios...",
     },

@@ -172,9 +172,9 @@ async def retorna_info(message,sku, lang='es'):
         mensaje=f"<b>{titulo}</b>\n"
         for precio, store in precios:
             if tienda==store:
-                mensaje+=text(lang,'prizecheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store))
+                mensaje+=text(lang,'prizecheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store),sku=sku)
             else:
-                mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store))
+                mensaje+=text(lang,'prizenocheap').format(store=stores[store]['name'], flag=stores[store]['flag'], precio=precio, url=url_product(sku,store),sku=sku)
         # logging.info(mensaje)
         await bot.edit_message_text(mensaje, chat_id=message.chat.id, message_id=mensaje_respuesta.message_id , parse_mode='HTML', reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(text="Track", callback_data=f"/track {sku} {precio}"))),
 
@@ -197,6 +197,22 @@ async def echo_message(message):
             con.commit()
             await bot.reply_to(message, text(message.from_user.language_code,'untrackedsuccess'))
             return
+    elif message.text.startswith('/info_'):
+        parts = message.text.split('_')
+        if len(parts) == 2:
+            id = parts[1]
+            logging.info(f"Getting info for tracking id: {id} for user {userid}")
+            cursor = con.cursor()
+            cursor.execute("SELECT sku, preciomin FROM trackings WHERE chatid=? AND id=?;", (userid, id))
+            row = cursor.fetchone()
+            if row is None:
+                await bot.reply_to(message, text(message.from_user.language_code,'no_results'))
+                return
+            sku, preciomin = row
+            logging.info(f"Tracking info: SKU {sku}, Minimum price {preciomin}")
+            await retorna_info(message, sku, message.from_user.language_code)
+            return
+
     if re.match(r'.*-.*-.*',message.text)!=None:
         await retorna_info(message,message.text, message.from_user.language_code)
         return
